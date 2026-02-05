@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valentine 💘</title>
+  <style>
+    :root {
+      --bg1: #0f1020;
+      --bg2: #2a0f2f;
+      --card: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.18);
+      --text: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.72);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 20% 20%, #3a1c6e 0%, transparent 55%),
+                  radial-gradient(900px 600px at 80% 70%, #b51764 0%, transparent 55%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow: hidden;
+    }
+
+    /* petits coeurs flottants */
+    .hearts {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.35;
+      filter: blur(0.2px);
+    }
+    .heart {
+      position: absolute;
+      font-size: 18px;
+      animation: floatUp linear infinite;
+      transform: translateY(110vh);
+    }
+    @keyframes floatUp {
+      from { transform: translateY(110vh) translateX(0); }
+      to   { transform: translateY(-20vh) translateX(40px); }
+    }
+
+    .wrap {
+      width: min(680px, calc(100% - 32px));
+      padding: 28px;
+      border-radius: 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 80px rgba(0,0,0,.35);
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 3.5vw, 40px);
+      letter-spacing: 0.2px;
+    }
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      position: relative;
+      min-height: 56px;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease;
+      user-select: none;
+    }
+    button:active { transform: scale(0.98); }
+
+    #yesBtn {
+      background: linear-gradient(135deg, #ff4d6d, #ff85a1);
+      color: #1c0b12;
+      box-shadow: 0 10px 30px rgba(255, 77, 109, .25);
+    }
+    #yesBtn:hover { filter: brightness(1.05); }
+
+    #noBtn {
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.20);
+      position: absolute; /* pour pouvoir le déplacer facilement */
+      left: 140px;
+      top: 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    #noBtn:hover { filter: brightness(1.08); }
+
+    .result {
+      margin-top: 18px;
+      padding: 16px 16px;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.18);
+      display: none;
+    }
+    .result strong {
+      display: inline-block;
+      margin-bottom: 6px;
+      font-size: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+    }
+
+    /* petite animation pop au "oui" */
+    .pop {
+      animation: pop .35s ease both;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.98); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hearts" id="hearts"></div>
+
+  <main class="wrap" id="card">
+    <div class="badge">💌 Petite question…</div>
+    <h1>Nataya veux-tu être ma Valentine ?</h1>
+    <p>Promis, ça vaut le coup d’essayer de cliquer sur “non”… 😇</p>
+
+    <div class="buttons" id="btnZone">
+      <button id="yesBtn">OUI 💖</button>
+      <button id="noBtn">NON 🙈</button>
+    </div>
+
+    <div class="result" id="result">
+      <strong>🎉 Yessss !</strong><br>
+      <span id="msg"></span>
+    </div>
+
+    <div class="footer">Astuce : envoie-lui le fichier ou mets-le sur un petit hébergement (GitHub Pages par ex.).</div>
+  </main>
+
+  <script>
+    // --------- coeurs flottants (décor) ----------
+    const hearts = document.getElementById("hearts");
+    const heartChars = ["💗","💖","💘","💝","💕","💞"];
+    const makeHearts = (count = 18) => {
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement("div");
+        s.className = "heart";
+        s.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+        s.style.left = Math.random() * 100 + "vw";
+        s.style.animationDuration = (6 + Math.random() * 8) + "s";
+        s.style.animationDelay = (-Math.random() * 10) + "s";
+        s.style.fontSize = (14 + Math.random() * 20) + "px";
+        hearts.appendChild(s);
+      }
+    };
+    makeHearts();
+
+    // --------- logique du "NON qui s'enfuit" ----------
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const zone = document.getElementById("btnZone");
+    const result = document.getElementById("result");
+    const msg = document.getElementById("msg");
+
+    const successText = "Je te donne rendez-vous le 14 février à 11h pour voir la surprise qui t'attend";
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function moveNoButton() {
+      // zone dimensions
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+
+      // marges pour éviter de coller aux bords
+      const padding = 6;
+
+      // bornes de déplacement dans la zone
+      const maxX = z.width - b.width - padding;
+      const maxY = z.height - b.height - padding;
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      noBtn.style.left = clamp(x, padding, maxX) + "px";
+      noBtn.style.top  = clamp(y, padding, maxY) + "px";
+    }
+
+    // Le bouton "NON" s'enfuit dès qu'on essaie de l'approcher
+    ["mouseenter", "mouseover", "touchstart", "pointerenter"].forEach(evt => {
+      noBtn.addEventListener(evt, (e) => {
+        e.preventDefault();
+        moveNoButton();
+      }, { passive: false });
+    });
+
+    // Et si elle arrive quand même à cliquer (sur mobile par ex.), il s'enfuit aussi
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      moveNoButton();
+    });
+
+    // Position initiale sympa (et re-calcul si resize)
+    window.addEventListener("load", moveNoButton);
+    window.addEventListener("resize", moveNoButton);
+
+    // --------- réponse au OUI ----------
+    yesBtn.addEventListener("click", () => {
+      msg.textContent = successText;
+      result.style.display = "block";
+      result.classList.remove("pop");
+      void result.offsetWidth; // reset anim
+      result.classList.add("pop");
+
+      // Optionnel : désactiver les boutons après oui
+      yesBtn.disabled = true;
+      yesBtn.style.cursor = "default";
+      noBtn.style.display = "none";
+    });
+  </script>
+</body>
+</html>
